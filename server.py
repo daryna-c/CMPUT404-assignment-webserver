@@ -1,5 +1,6 @@
 #  coding: utf-8 
 import socketserver
+import os.path
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -32,7 +33,29 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        response = self.parseRequest(self.data)
+        #self.request.sendall(bytearray("OK",'utf-8'))
+        self.request.sendall(bytearray(response,'utf-8'))
+
+    def parseRequest(self, requestData):
+        if requestData.startswith(b"GET "):
+            response = "HTTP/1.1 200 OK\r\n"
+            pathStartIndex = requestData.index(b"/") + 1
+            name = requestData[pathStartIndex : requestData.index(b" ", pathStartIndex, len(requestData))]
+            print("pathname:", name)
+            try:
+                file = open(b"www/"+name, "r")
+                fileContent = file.read()
+                response = "HTTP/1.1 200 OK\r\nContent Type: text/html; charset=utf-8\r\n" + fileContent + "\r\n"
+            except OSError:
+                #file = open(b"www/"+name+"/index.html", "r")
+                response = "HTTP/1.1 404 Not Found\r\n"
+
+        else:
+            response = "HTTP/1.1 405 Method Not Allowed\r\n"
+        return response
+
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
