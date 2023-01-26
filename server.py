@@ -36,31 +36,36 @@ class MyWebServer(socketserver.BaseRequestHandler):
         response = self.parseRequest()
         #self.request.sendall(bytearray("OK",'utf-8'))
         self.request.sendall(bytearray(response,'utf-8'))
+        print("response:\n", response)
     
     def getPath(self):
-        path = self.data[self.data.index("/"), self.data.index("\r\n")]
+        strData = self.data.decode()
+        path = strData[strData.index("/") : strData.index(" HTTP/")]
         print("path:", path)
-        localPath = os.path.join(os.getcwd(), "/www"+path)
+        #localPath = os.path.join(os.getcwd(), "/www"+path)
+        localPath = os.getcwd() + "/www" + path 
+        print("local path:", localPath)
         return path, localPath
 
     def checkIsSafePath(self, desired):
         # checks if the desired path is in the /www directory
         shallowest = os.getcwd() + "/www"
-        if os.path.commonpath(shallowest, os.path.normpath(desired)) == shallowest:
+        if os.path.commonpath([shallowest, os.path.normpath(desired)]) == shallowest:
             return True
         else:
             return False
 
     def determineFileType(self, path):
         basename = os.path.basename(path)
-        if basename.find(".css"):
+        if basename.find(".css") != -1:
             return "Content Type: text/css; charset=utf-8\r\n"
-        elif basename.find(".html"):
+        elif basename.find(".html") != -1:
             return "Content Type: text/html; charset=utf-8\r\n"
         else:
             return ""
 
     def parseRequest(self):
+        response = "NO RESPONSE!!!"
         if self.data.startswith(b"GET ") or self.requestData.startswith(b"HEAD "):
             path, localPath = self.getPath()
             if not self.checkIsSafePath(localPath):
@@ -80,8 +85,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
                             file = open(localPath+"index.html", "r")
                             fileContent = file.read()
                             file.close()
-                            response = "HTTP/1.1 200 OK\r\nContent Type: text/html; charset=utf-8\r\n\n{}\r\n".format(contentType, fileContent)
-                        except:
+                            response = "HTTP/1.1 200 OK\r\nContent Type: text/html; charset=utf-8\r\n\n{}\r\n".format(fileContent)
+                        except OSError:
                             response = "HTTP/1.1 404 Not Found\r\n"
 
                 else:
