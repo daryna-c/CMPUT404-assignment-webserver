@@ -2,7 +2,7 @@
 import socketserver
 import os.path
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2023 Abram Hindle, Eddie Antonio Santos, Daryna Chernyavska
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,11 +33,65 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        response = self.parseRequest(self.data)
+        response = self.parseRequest()
         #self.request.sendall(bytearray("OK",'utf-8'))
         self.request.sendall(bytearray(response,'utf-8'))
+    
+    def getPath(self):
+        path = self.data[self.data.index("/"), self.data.index("\r\n")]
+        print("path:", path)
+        localPath = os.path.join(os.getcwd(), "/www"+path)
+        return path, localPath
 
-    def parseRequest(self, requestData):
+    def checkIsSafePath(self, desired):
+        # checks if the desired path is in the /www directory
+        shallowest = os.getcwd() + "/www"
+        if os.path.commonpath(shallowest, os.path.normpath(desired)) == shallowest:
+            return True
+        else:
+            return False
+
+    def determineFileType(self, path):
+        basename = os.path.basename(path)
+        if basename.find(".css"):
+            return "Content Type: text/css; charset=utf-8\r\n"
+        elif basename.find(".html"):
+            return "Content Type: text/html; charset=utf-8\r\n"
+        else:
+            return ""
+
+    def parseRequest(self):
+        if self.data.startswith(b"GET ") or self.requestData.startswith(b"HEAD "):
+            path, localPath = self.getPath()
+            if not self.checkIsSafePath(localPath):
+                response = "HTTP/1.1 404 Not Found\r\n"
+            else:
+                if os.path.isfile(localPath):
+                    file = open(localPath, "r")
+                    fileContent = file.read()
+                    file.close()
+                    contentType = self.determineFileType(path)
+                    response = "HTTP/1.1 200 OK\r\n{}\n{}\r\n".format(contentType, fileContent)
+                elif os.path.isdir(localPath):
+                    if localPath[len(localPath)-1] != "/":
+                        response = "HTTP/1.1 301 Moved Permanently\r\nLocation: {}/\r\n".format(path)
+                    else:
+                        try:
+                            file = open(localPath+"index.html", "r")
+                            fileContent = file.read()
+                            file.close()
+                            response = "HTTP/1.1 200 OK\r\nContent Type: text/html; charset=utf-8\r\n\n{}\r\n".format(contentType, fileContent)
+                        except:
+                            response = "HTTP/1.1 404 Not Found\r\n"
+
+                else:
+                    response = "HTTP/1.1 404 Not Found\r\n"
+        else:
+            response = "HTTP/1.1 405 Method Not Allowed\r\n"
+        
+        return response
+
+"""     def parseRequest(self, requestData):
         if requestData.startswith(b"GET "):
             response = "HTTP/1.1 200 OK\r\n"
             pathStartIndex = requestData.index(b"/") + 1
@@ -53,7 +107,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         else:
             response = "HTTP/1.1 405 Method Not Allowed\r\n"
-        return response
+        return response """
 
 
 
