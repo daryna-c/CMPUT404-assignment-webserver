@@ -60,7 +60,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
+        print("Got a request of: %s\n" % self.data)
         response = self.createResponse()
         self.request.sendall(bytearray(response,'utf-8'))
     
@@ -82,7 +82,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def determineFileType(self, path):
         # checks the extension of the file and returns the appropriate line for content type for the HTTP header
         basename = os.path.basename(path)
-        print("basename:", basename)
         if basename.find(".css") != -1:
             return "Content-Type: text/css; charset=utf-8\r\n"
         elif basename.find(".html") != -1:
