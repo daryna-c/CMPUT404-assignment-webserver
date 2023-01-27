@@ -46,8 +46,10 @@ import os.path
 #    Year: 2023
 #    Resource: https://www.pythonpool.com/python-bytes-to-string/
 #
-#    OS path - Common pathnames manipulation was referenced which is © Copyright 2001-2023, Python Software Foundation
-#    https://docs.python.org/3/library/os.path.html
+#    Author: Python Software Foundation
+#    Title: OS path - Common pathnames manipulation 
+#    Year: 2023
+#    Resource: https://docs.python.org/3/library/os.path.html
 #
 # run: python freetests.py
 
