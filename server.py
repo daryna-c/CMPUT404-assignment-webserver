@@ -32,19 +32,18 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
+#        print ("Got a request of: %s\n" % self.data)
         response = self.parseRequest()
-        #self.request.sendall(bytearray("OK",'utf-8'))
         self.request.sendall(bytearray(response,'utf-8'))
-        print("response:\n", response)
+        #print("response:\n", response)
     
     def getPath(self):
         strData = self.data.decode()
         path = strData[strData.index("/") : strData.index(" HTTP/")]
-        print("path:", path)
+#        print("path:", path)
         #localPath = os.path.join(os.getcwd(), "/www"+path)
         localPath = os.getcwd() + "/www" + path 
-        print("local path:", localPath)
+#        print("local path:", localPath)
         return path, localPath
 
     def checkIsSafePath(self, desired):
@@ -57,16 +56,19 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def determineFileType(self, path):
         basename = os.path.basename(path)
+        print("basename:", basename)
         if basename.find(".css") != -1:
-            return "Content Type: text/css; charset=utf-8\r\n"
+            #print("ContentType: text/css")
+            return "Content-Type: text/css; charset=utf-8\r\n"
         elif basename.find(".html") != -1:
-            return "Content Type: text/html; charset=utf-8\r\n"
+            #print("ContentType: text/html")
+            return "Content-Type: text/html; charset=utf-8\r\n"
         else:
             return ""
 
     def parseRequest(self):
         response = "NO RESPONSE!!!"
-        if self.data.startswith(b"GET ") or self.requestData.startswith(b"HEAD "):
+        if self.data.startswith(b"GET ") or self.data.startswith(b"HEAD "):
             path, localPath = self.getPath()
             if not self.checkIsSafePath(localPath):
                 response = "HTTP/1.1 404 Not Found\r\n"
@@ -85,7 +87,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                             file = open(localPath+"index.html", "r")
                             fileContent = file.read()
                             file.close()
-                            response = "HTTP/1.1 200 OK\r\nContent Type: text/html; charset=utf-8\r\n\n{}\r\n".format(fileContent)
+                            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\n{}\r\n".format(fileContent)
                         except OSError:
                             response = "HTTP/1.1 404 Not Found\r\n"
 
@@ -95,25 +97,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
             response = "HTTP/1.1 405 Method Not Allowed\r\n"
         
         return response
-
-"""     def parseRequest(self, requestData):
-        if requestData.startswith(b"GET "):
-            response = "HTTP/1.1 200 OK\r\n"
-            pathStartIndex = requestData.index(b"/") + 1
-            name = requestData[pathStartIndex : requestData.index(b" ", pathStartIndex, len(requestData))]
-            print("pathname:", name)
-            try:
-                file = open(b"www/"+name, "r")
-                fileContent = file.read()
-                response = "HTTP/1.1 200 OK\r\nContent Type: text/html; charset=utf-8\r\n" + fileContent + "\r\n"
-            except OSError:
-                #file = open(b"www/"+name+"/index.html", "r")
-                response = "HTTP/1.1 404 Not Found\r\n"
-
-        else:
-            response = "HTTP/1.1 405 Method Not Allowed\r\n"
-        return response """
-
 
 
 if __name__ == "__main__":
